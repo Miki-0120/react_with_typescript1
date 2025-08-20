@@ -68,30 +68,45 @@ export default function UserTable() {
     return user.role === roleFilter;
   });
 
-  const filteredAndSortedUsers = [...filteredUsers].sort((a, b) => {
+  type NumberKeys<T> = {
+  [K in keyof T]: T[K] extends number ? K : never;
+}[keyof T];
+
+const sortUsers = <T>(
+  users: T[], 
+  sortKey: NumberKeys<T> | null, 
+  sortOrder: 'asc' | 'desc'
+): T[] => {
+  return [...users].sort((a, b) => {
     if (!sortKey) return 0;
-    const aValue = (a as any)[sortKey];
-    const bValue = (b as any)[sortKey];
-    if (typeof aValue !== 'number' || typeof bValue !== 'number') return 0;
+    const aValue = a[sortKey] as number;
+    const bValue = b[sortKey] as number;
     return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
   });
+};
 
-  const getSortButtonText = (key: string) => {
-    if (sortKey === key) {
-      return sortOrder === 'asc' ? '▲(昇順)' : '▼(降順)';
-    }
-    return '';
-  };
+type SortKey = 'id' | 'name' | 'email' | 'role';
+
+const [sortKey, setSortKey] = useState<SortKey>('id');
+const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
+const getSortButtonText = (key: SortKey) => {
+  if (sortKey === key) {
+    return sortOrder === 'asc' ? '▲(昇順)' : '▼(降順)';
+  }
+  return '';
+};
 
   const handleRoleSelect = (role: "student" | "mentor") => {
     setSelectedRole(role);
     setFormData({});
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setFormData((prev: any) => ({
       ...prev,
-      [field]: value
+    [name]: value
     }));
   };
 
@@ -118,13 +133,28 @@ export default function UserTable() {
       return;
     }
 
-    const processedData: any = {
-      ...formData,
-      role: selectedRole,
-      id: Math.max(...users.map(u => u.id)) + 1,
-      age: parseInt(formData.age) || 0,
-      hobbies: formData.hobbies?.split(",").map((h: string) => h.trim()).filter(Boolean) || [],
-    };
+    interface User {
+  id: number;
+  role: string;
+  age: number;
+  hobbies: string[];
+  name?: string;
+  email?: string;
+}
+
+interface FormData {
+  age: string;
+  hobbies?: string;
+  name?: string;
+  email?: string;
+
+  const processedData: User = {
+    ...formData,
+    role: selectedRole,
+    id: Math.max(...users.map(u => u.id)) + 1,
+    age: parseInt(formData.age) || 0,
+    hobbies: formData.hobbies?.split(",").map((h: string) => h.trim()).filter(Boolean) ?? [],
+  };
 
     if (selectedRole === "student") {
       processedData.studyMinutes = parseInt(formData.studyMinutes) || 0;
@@ -391,72 +421,7 @@ export default function UserTable() {
             </tr>
           </thead>
           <tbody>
-            {filteredAndSortedUsers.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50">
-                <td className="border border-gray-300 px-4 py-2">{user.name}</td>
-                <td className="border border-gray-300 px-4 py-2">{user.role === 'student' ? '生徒' : 'メンター'}</td>
-                <td className="border border-gray-300 px-4 py-2">{user.email}</td>
-                <td className="border border-gray-300 px-4 py-2">{user.age}</td>
-                <td className="border border-gray-300 px-4 py-2">{user.postCode}</td>
-                <td className="border border-gray-300 px-4 py-2">{user.phone}</td>
-                <td className="border border-gray-300 px-4 py-2">{user.hobbies.join(', ')}</td>
-                <td className="border border-gray-300 px-4 py-2">
-                  <a href={user.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">
-                    リンク
-                  </a>
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'student' ? user.studyMinutes : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'student' ? user.taskCode : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'student' ? (user.studyLangs as string[]).join(', ') : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'student' ? user.score : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'student'
-                    ? users
-                        .filter(
-                          (u): u is Mentor =>
-                            u.role === 'mentor' &&
-                            u.availableStartCode <= user.taskCode &&
-                            user.taskCode <= u.availableEndCode
-                        )
-                        .map((m) => m.name)
-                        .join(', ') || '該当なし'
-                    : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'mentor' ? user.experienceDays : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'mentor' ? (user.useLangs as string[]).join(', ') : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'mentor' ? user.availableStartCode : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'mentor' ? user.availableEndCode : '-'}
-                </td>
-                <td className="border border-gray-300 px-4 py-2">
-                  {user.role === 'mentor'
-                    ? users
-                        .filter(
-                          (u): u is Student =>
-                            u.role === 'student' &&
-                            user.availableStartCode <= u.taskCode &&
-                            u.taskCode <= user.availableEndCode
-                        )
-                        .map((s) => s.name)
-                        .join(', ') || '該当なし'
-                    : '-'}
-                </td>
-              </tr>
-            ))}
+            const isStudent = user.role === 'student'
           </tbody>
         </table>
       </div>
