@@ -1,38 +1,6 @@
 import { useState } from 'react';
-
-type Student = {
-  id: number;
-  name: string;
-  role: 'student';
-  email: string;
-  age: number;
-  postCode: string;
-  phone: string;
-  hobbies: string[];
-  url: string;
-  studyMinutes: number;
-  taskCode: number;
-  studyLangs: string[];
-  score: number;
-};
-
-type Mentor = {
-  id: number;
-  name: string;
-  role: 'mentor';
-  email: string;
-  age: number;
-  postCode: string;
-  phone: string;
-  hobbies: string[];
-  url: string;
-  experienceDays: number;
-  useLangs: string[];
-  availableStartCode: number;
-  availableEndCode: number;
-};
-
-type User = Student | Mentor;
+import type { User } from './types.ts';
+import { Table } from './table';
 
 const INITIAL_USER_LIST: User[] = [
   { id: 1, name: "鈴木太郎", role: "student", email: "test1@happiness.com", age: 26, postCode: "100-0003", phone: "0120000001", hobbies: ["旅行", "食べ歩き", "サーフィン"], url: "https://aaa.com", studyMinutes: 3000, taskCode: 101, studyLangs: ["Rails", "Javascript"], score: 68 },
@@ -45,16 +13,26 @@ const INITIAL_USER_LIST: User[] = [
   { id: 8, name: "鈴木八郎", role: "mentor", email: "test8@happiness.com", age: 33, postCode: "100-0009", phone: "0120000008", hobbies: ["ランニング", "旅行"], url: "https://hhh.com", experienceDays: 6000, useLangs: ["Golang", "Rails"], availableStartCode: 301, availableEndCode: 505 },
 ];
 
+type SortableKey = 'studyMinutes' | 'score' | 'experienceDays';
+
+const hasStudentProperties = (user: User): user is User & { studyMinutes: number; score: number } => {
+  return user.role === 'student';
+};
+
+const hasMentorProperties = (user: User): user is User & { experienceDays: number } => {
+  return user.role === 'mentor';
+};
+
 export default function UserTable() {
   const [users, setUsers] = useState<User[]>(INITIAL_USER_LIST);
   const [roleFilter, setRoleFilter] = useState<'all' | 'student' | 'mentor'>('all');
-  const [sortKey, setSortKey] = useState<'studyMinutes' | 'score' | 'experienceDays' | null>(null);
+  const [sortKey, setSortKey] = useState<SortableKey | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"" | "student" | "mentor">("");
   const [formData, setFormData] = useState<any>({});
 
-  const handleSort = (key: 'studyMinutes' | 'score' | 'experienceDays') => {
+  const handleSort = (key: SortableKey) => {
     if (sortKey === key) {
       setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -68,45 +46,50 @@ export default function UserTable() {
     return user.role === roleFilter;
   });
 
-  type NumberKeys<T> = {
-  [K in keyof T]: T[K] extends number ? K : never;
-}[keyof T];
+  const sortUsers = (
+    users: User[], 
+    sortKey: SortableKey | null, 
+    sortOrder: 'asc' | 'desc'
+  ): User[] => {
+    if (!sortKey) return users;
+    
+    return [...users].sort((a, b) => {
+      let aValue: number = 0;
+      let bValue: number = 0;
+      
+      if (sortKey === 'studyMinutes') {
+        aValue = hasStudentProperties(a) ? a.studyMinutes : 0;
+        bValue = hasStudentProperties(b) ? b.studyMinutes : 0;
+      } else if (sortKey === 'score') {
+        aValue = hasStudentProperties(a) ? a.score : 0;
+        bValue = hasStudentProperties(b) ? b.score : 0;
+      } else if (sortKey === 'experienceDays') {
+        aValue = hasMentorProperties(a) ? a.experienceDays : 0;
+        bValue = hasMentorProperties(b) ? b.experienceDays : 0;
+      }
+      
+      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    });
+  };
 
-const sortUsers = <T>(
-  users: T[], 
-  sortKey: NumberKeys<T> | null, 
-  sortOrder: 'asc' | 'desc'
-): T[] => {
-  return [...users].sort((a, b) => {
-    if (!sortKey) return 0;
-    const aValue = a[sortKey] as number;
-    const bValue = b[sortKey] as number;
-    return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
-  });
-};
+  const filteredAndSortedUsers = sortUsers(filteredUsers, sortKey, sortOrder);
 
-type SortKey = 'id' | 'name' | 'email' | 'role';
-
-const [sortKey, setSortKey] = useState<SortKey>('id');
-const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-
-const getSortButtonText = (key: SortKey) => {
-  if (sortKey === key) {
-    return sortOrder === 'asc' ? '▲(昇順)' : '▼(降順)';
-  }
-  return '';
-};
+  const getSortButtonText = (key: SortableKey) => {
+    if (sortKey === key) {
+      return sortOrder === 'asc' ? '▲(昇順)' : '▼(降順)';
+    }
+    return '';
+  };
 
   const handleRoleSelect = (role: "student" | "mentor") => {
     setSelectedRole(role);
     setFormData({});
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+  const handleInputChange = (field: string, value: string) => {
     setFormData((prev: any) => ({
       ...prev,
-    [name]: value
+      [field]: value
     }));
   };
 
@@ -133,28 +116,13 @@ const getSortButtonText = (key: SortKey) => {
       return;
     }
 
-    interface User {
-  id: number;
-  role: string;
-  age: number;
-  hobbies: string[];
-  name?: string;
-  email?: string;
-}
-
-interface FormData {
-  age: string;
-  hobbies?: string;
-  name?: string;
-  email?: string;
-
-  const processedData: User = {
-    ...formData,
-    role: selectedRole,
-    id: Math.max(...users.map(u => u.id)) + 1,
-    age: parseInt(formData.age) || 0,
-    hobbies: formData.hobbies?.split(",").map((h: string) => h.trim()).filter(Boolean) ?? [],
-  };
+    const processedData: any = {
+      ...formData,
+      role: selectedRole,
+      id: Math.max(...users.map(u => u.id)) + 1,
+      age: parseInt(formData.age) || 0,
+      hobbies: formData.hobbies?.split(",").map((h: string) => h.trim()).filter(Boolean) ?? [],
+    };
 
     if (selectedRole === "student") {
       processedData.studyMinutes = parseInt(formData.studyMinutes) || 0;
@@ -168,7 +136,7 @@ interface FormData {
       processedData.availableEndCode = parseInt(formData.availableEndCode) || 0;
     }
 
-    setUsers((prev) => [...prev, processedData]);
+    setUsers((prev) => [...prev, processedData as User]);
     setSelectedRole("");
     setFormData({});
     setShowRegistrationForm(false);
@@ -395,36 +363,7 @@ interface FormData {
         </div>
       )}
 
-      {/* テーブル */}
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-100">
-              <th className="border border-gray-300 px-4 py-2">名前</th>
-              <th className="border border-gray-300 px-4 py-2">ロール</th>
-              <th className="border border-gray-300 px-4 py-2">メールアドレス</th>
-              <th className="border border-gray-300 px-4 py-2">年齢</th>
-              <th className="border border-gray-300 px-4 py-2">郵便番号</th>
-              <th className="border border-gray-300 px-4 py-2">電話番号</th>
-              <th className="border border-gray-300 px-4 py-2">趣味</th>
-              <th className="border border-gray-300 px-4 py-2">URL</th>
-              <th className="border border-gray-300 px-4 py-2">勉強時間</th>
-              <th className="border border-gray-300 px-4 py-2">課題番号</th>
-              <th className="border border-gray-300 px-4 py-2">勉強中の言語</th>
-              <th className="border border-gray-300 px-4 py-2">ハピネススコア</th>
-              <th className="border border-gray-300 px-4 py-2">対応可能なメンター</th>
-              <th className="border border-gray-300 px-4 py-2">実務経験日数</th>
-              <th className="border border-gray-300 px-4 py-2">現場で使っている言語</th>
-              <th className="border border-gray-300 px-4 py-2">担当できる課題番号初め</th>
-              <th className="border border-gray-300 px-4 py-2">担当できる課題番号終わり</th>
-              <th className="border border-gray-300 px-4 py-2">対応可能な生徒</th>
-            </tr>
-          </thead>
-          <tbody>
-            const isStudent = user.role === 'student'
-          </tbody>
-        </table>
-      </div>
+      <Table users={users} filteredAndSortedUsers={filteredAndSortedUsers} />
     </div>
   );
 }
