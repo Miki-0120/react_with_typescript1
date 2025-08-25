@@ -1,5 +1,5 @@
 import React from "react";
-import type { Student, Mentor, User } from "./types.ts";
+import type { Student, Mentor, User } from "./types";
 
 type TableProps = {
   users: User[]; 
@@ -61,7 +61,7 @@ export const Table: React.FC<TableProps> = ({ users, filteredAndSortedUsers }) =
                   {isStudent ? user.taskCode : "-"}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {isStudent ? (user.studyLangs as string[]).join(", ") : "-"}
+                  {isStudent ? user.studyLangs.join(", ") : "-"}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
                   {isStudent ? user.score : "-"}
@@ -85,7 +85,7 @@ export const Table: React.FC<TableProps> = ({ users, filteredAndSortedUsers }) =
                   {!isStudent ? user.experienceDays : "-"}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
-                  {!isStudent ? (user.useLangs as string[]).join(", ") : "-"}
+                  {!isStudent ? user.useLangs.join(", ") : "-"}
                 </td>
                 <td className="border border-gray-300 px-4 py-2">
                   {!isStudent ? user.availableStartCode : "-"}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { User } from './types.ts';
+import type { User, Student, Mentor, StudentFormData, MentorFormData } from './types';
 import { Table } from './table';
 
 const INITIAL_USER_LIST: User[] = [
@@ -15,13 +15,41 @@ const INITIAL_USER_LIST: User[] = [
 
 type SortableKey = 'studyMinutes' | 'score' | 'experienceDays';
 
-const hasStudentProperties = (user: User): user is User & { studyMinutes: number; score: number } => {
+const hasStudentProperties = (user: User): user is Student => {
   return user.role === 'student';
 };
 
-const hasMentorProperties = (user: User): user is User & { experienceDays: number } => {
+const hasMentorProperties = (user: User): user is Mentor => {
   return user.role === 'mentor';
 };
+
+const createEmptyStudentFormData = (): StudentFormData => ({
+  name: '',
+  email: '',
+  age: '',
+  postCode: '',
+  phone: '',
+  hobbies: '',
+  url: '',
+  studyMinutes: '',
+  taskCode: '',
+  studyLangs: '',
+  score: ''
+});
+
+const createEmptyMentorFormData = (): MentorFormData => ({
+  name: '',
+  email: '',
+  age: '',
+  postCode: '',
+  phone: '',
+  hobbies: '',
+  url: '',
+  experienceDays: '',
+  useLangs: '',
+  availableStartCode: '',
+  availableEndCode: ''
+});
 
 export default function UserTable() {
   const [users, setUsers] = useState<User[]>(INITIAL_USER_LIST);
@@ -30,7 +58,8 @@ export default function UserTable() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"" | "student" | "mentor">("");
-  const [formData, setFormData] = useState<any>({});
+  const [studentFormData, setStudentFormData] = useState<StudentFormData>(createEmptyStudentFormData());
+  const [mentorFormData, setMentorFormData] = useState<MentorFormData>(createEmptyMentorFormData());
 
   const handleSort = (key: SortableKey) => {
     if (sortKey === key) {
@@ -83,71 +112,108 @@ export default function UserTable() {
 
   const handleRoleSelect = (role: "student" | "mentor") => {
     setSelectedRole(role);
-    setFormData({});
+
+    if (role === 'student') {
+      setStudentFormData(createEmptyStudentFormData());
+    } else {
+      setMentorFormData(createEmptyMentorFormData());
+    }
   };
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev: any) => ({
+  const handleStudentInputChange = (field: keyof StudentFormData, value: string) => {
+    setStudentFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const validateForm = () => {
-    const requiredFields = ['name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url'];
-    
-    if (selectedRole === 'student') {
-      requiredFields.push('studyMinutes', 'taskCode', 'studyLangs', 'score');
-    } else if (selectedRole === 'mentor') {
-      requiredFields.push('experienceDays', 'useLangs', 'availableStartCode', 'availableEndCode');
-    }
+  const handleMentorInputChange = (field: keyof MentorFormData, value: string) => {
+    setMentorFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
-    for (const field of requiredFields) {
-      if (!formData[field] || formData[field].toString().trim() === '') {
-        return false;
-      }
-    }
-    return true;
+  const validateStudentForm = (data: StudentFormData): boolean => {
+    const requiredFields: (keyof StudentFormData)[] = [
+      'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
+      'studyMinutes', 'taskCode', 'studyLangs', 'score'
+    ];
+    
+    return requiredFields.every(field => data[field].trim() !== '');
+  };
+
+  const validateMentorForm = (data: MentorFormData): boolean => {
+    const requiredFields: (keyof MentorFormData)[] = [
+      'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
+      'experienceDays', 'useLangs', 'availableStartCode', 'availableEndCode'
+    ];
+    
+    return requiredFields.every(field => data[field].trim() !== '');
   };
 
   const handleRegister = () => {
-    if (!validateForm()) {
-      alert("全ての項目を入力してください。");
-      return;
+    if (selectedRole === 'student') {
+      if (!validateStudentForm(studentFormData)) {
+        alert("全ての項目を入力してください。");
+        return;
+      }
+
+      const newStudent: Student = {
+        id: Math.max(...users.map(u => u.id)) + 1,
+        name: studentFormData.name,
+        role: 'student',
+        email: studentFormData.email,
+        age: parseInt(studentFormData.age) || 0,
+        postCode: studentFormData.postCode,
+        phone: studentFormData.phone,
+        hobbies: studentFormData.hobbies.split(",").map(h => h.trim()).filter(Boolean),
+        url: studentFormData.url,
+        studyMinutes: parseInt(studentFormData.studyMinutes) || 0,
+        taskCode: parseInt(studentFormData.taskCode) || 0,
+        studyLangs: studentFormData.studyLangs.split(",").map(l => l.trim()).filter(Boolean),
+        score: parseInt(studentFormData.score) || 0
+      };
+
+      setUsers(prev => [...prev, newStudent]);
+    } else if (selectedRole === 'mentor') {
+      if (!validateMentorForm(mentorFormData)) {
+        alert("全ての項目を入力してください。");
+        return;
+      }
+
+      const newMentor: Mentor = {
+        id: Math.max(...users.map(u => u.id)) + 1,
+        name: mentorFormData.name,
+        role: 'mentor',
+        email: mentorFormData.email,
+        age: parseInt(mentorFormData.age) || 0,
+        postCode: mentorFormData.postCode,
+        phone: mentorFormData.phone,
+        hobbies: mentorFormData.hobbies.split(",").map(h => h.trim()).filter(Boolean),
+        url: mentorFormData.url,
+        experienceDays: parseInt(mentorFormData.experienceDays) || 0,
+        useLangs: mentorFormData.useLangs.split(",").map(l => l.trim()).filter(Boolean),
+        availableStartCode: parseInt(mentorFormData.availableStartCode) || 0,
+        availableEndCode: parseInt(mentorFormData.availableEndCode) || 0
+      };
+
+      setUsers(prev => [...prev, newMentor]);
     }
 
-    const processedData: any = {
-      ...formData,
-      role: selectedRole,
-      id: Math.max(...users.map(u => u.id)) + 1,
-      age: parseInt(formData.age) || 0,
-      hobbies: formData.hobbies?.split(",").map((h: string) => h.trim()).filter(Boolean) ?? [],
-    };
-
-    if (selectedRole === "student") {
-      processedData.studyMinutes = parseInt(formData.studyMinutes) || 0;
-      processedData.taskCode = parseInt(formData.taskCode) || 0;
-      processedData.studyLangs = formData.studyLangs?.split(",").map((l: string) => l.trim()).filter(Boolean) || [];
-      processedData.score = parseInt(formData.score) || 0;
-    } else {
-      processedData.experienceDays = parseInt(formData.experienceDays) || 0;
-      processedData.useLangs = formData.useLangs?.split(",").map((l: string) => l.trim()).filter(Boolean) || [];
-      processedData.availableStartCode = parseInt(formData.availableStartCode) || 0;
-      processedData.availableEndCode = parseInt(formData.availableEndCode) || 0;
-    }
-
-    setUsers((prev) => [...prev, processedData as User]);
     setSelectedRole("");
-    setFormData({});
     setShowRegistrationForm(false);
     alert("登録に成功しました");
   };
 
   const resetForm = () => {
     setSelectedRole("");
-    setFormData({});
+    setStudentFormData(createEmptyStudentFormData());
+    setMentorFormData(createEmptyMentorFormData());
     setShowRegistrationForm(false);
   };
+
+  const currentFormData = selectedRole === 'student' ? studentFormData : mentorFormData;
 
   return (
     <div className="p-4">
@@ -205,48 +271,70 @@ export default function UserTable() {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
             {/* 共通項目 */}
             <input 
               placeholder="名前 *" 
-              value={formData.name || ''} 
-              onChange={(e) => handleInputChange("name", e.target.value)} 
+              value={currentFormData.name} 
+              onChange={(e) => selectedRole === 'student' 
+                ? handleStudentInputChange("name", e.target.value)
+                : handleMentorInputChange("name", e.target.value)
+              } 
               className="border p-2 rounded" 
             />
             <input 
               placeholder="メールアドレス *" 
-              value={formData.email || ''} 
-              onChange={(e) => handleInputChange("email", e.target.value)} 
+              value={currentFormData.email} 
+              onChange={(e) => selectedRole === 'student' 
+                ? handleStudentInputChange("email", e.target.value)
+                : handleMentorInputChange("email", e.target.value)
+              } 
               className="border p-2 rounded" 
             />
             <input 
               placeholder="年齢 *" 
               type="text"
-              value={formData.age || ''} 
-              onChange={(e) => handleInputChange("age", e.target.value)} 
+              value={currentFormData.age} 
+              onChange={(e) => selectedRole === 'student' 
+                ? handleStudentInputChange("age", e.target.value)
+                : handleMentorInputChange("age", e.target.value)
+              } 
               className="border p-2 rounded" 
             />
             <input 
               placeholder="郵便番号 *" 
-              value={formData.postCode || ''} 
-              onChange={(e) => handleInputChange("postCode", e.target.value)} 
+              value={currentFormData.postCode} 
+              onChange={(e) => selectedRole === 'student' 
+                ? handleStudentInputChange("postCode", e.target.value)
+                : handleMentorInputChange("postCode", e.target.value)
+              } 
               className="border p-2 rounded" 
             />
             <input 
               placeholder="電話番号 *" 
-              value={formData.phone || ''} 
-              onChange={(e) => handleInputChange("phone", e.target.value)} 
+              value={currentFormData.phone} 
+              onChange={(e) => selectedRole === 'student' 
+                ? handleStudentInputChange("phone", e.target.value)
+                : handleMentorInputChange("phone", e.target.value)
+              } 
               className="border p-2 rounded" 
             />
             <input 
               placeholder="趣味 (カンマ区切り) *" 
-              value={formData.hobbies || ''} 
-              onChange={(e) => handleInputChange("hobbies", e.target.value)} 
+              value={currentFormData.hobbies} 
+              onChange={(e) => selectedRole === 'student' 
+                ? handleStudentInputChange("hobbies", e.target.value)
+                : handleMentorInputChange("hobbies", e.target.value)
+              } 
               className="border p-2 rounded" 
             />
             <input 
               placeholder="URL *" 
-              value={formData.url || ''} 
-              onChange={(e) => handleInputChange("url", e.target.value)} 
+              value={currentFormData.url} 
+              onChange={(e) => selectedRole === 'student' 
+                ? handleStudentInputChange("url", e.target.value)
+                : handleMentorInputChange("url", e.target.value)
+              } 
               className="border p-2 rounded col-span-full" 
             />
 
@@ -256,28 +344,28 @@ export default function UserTable() {
                 <input 
                   placeholder="勉強時間（分） *" 
                   type="text"
-                  value={formData.studyMinutes || ''} 
-                  onChange={(e) => handleInputChange("studyMinutes", e.target.value)} 
+                  value={studentFormData.studyMinutes} 
+                  onChange={(e) => handleStudentInputChange("studyMinutes", e.target.value)} 
                   className="border p-2 rounded" 
                 />
                 <input 
                   placeholder="課題番号 *" 
                   type="text"
-                  value={formData.taskCode || ''} 
-                  onChange={(e) => handleInputChange("taskCode", e.target.value)} 
+                  value={studentFormData.taskCode} 
+                  onChange={(e) => handleStudentInputChange("taskCode", e.target.value)} 
                   className="border p-2 rounded" 
                 />
                 <input 
                   placeholder="勉強中の言語 (カンマ区切り) *" 
-                  value={formData.studyLangs || ''} 
-                  onChange={(e) => handleInputChange("studyLangs", e.target.value)} 
+                  value={studentFormData.studyLangs} 
+                  onChange={(e) => handleStudentInputChange("studyLangs", e.target.value)} 
                   className="border p-2 rounded" 
                 />
                 <input 
                   placeholder="ハピネススコア *" 
                   type="text"
-                  value={formData.score || ''} 
-                  onChange={(e) => handleInputChange("score", e.target.value)} 
+                  value={studentFormData.score} 
+                  onChange={(e) => handleStudentInputChange("score", e.target.value)} 
                   className="border p-2 rounded" 
                 />
               </>
@@ -289,28 +377,28 @@ export default function UserTable() {
                 <input 
                   placeholder="実務経験日数 *" 
                   type="text"
-                  value={formData.experienceDays || ''} 
-                  onChange={(e) => handleInputChange("experienceDays", e.target.value)} 
+                  value={mentorFormData.experienceDays} 
+                  onChange={(e) => handleMentorInputChange("experienceDays", e.target.value)} 
                   className="border p-2 rounded" 
                 />
                 <input 
                   placeholder="現場で使っている言語 (カンマ区切り) *" 
-                  value={formData.useLangs || ''} 
-                  onChange={(e) => handleInputChange("useLangs", e.target.value)} 
+                  value={mentorFormData.useLangs} 
+                  onChange={(e) => handleMentorInputChange("useLangs", e.target.value)} 
                   className="border p-2 rounded" 
                 />
                 <input 
                   placeholder="担当できる課題番号（開始） *" 
                   type="text"
-                  value={formData.availableStartCode || ''} 
-                  onChange={(e) => handleInputChange("availableStartCode", e.target.value)} 
+                  value={mentorFormData.availableStartCode} 
+                  onChange={(e) => handleMentorInputChange("availableStartCode", e.target.value)} 
                   className="border p-2 rounded" 
                 />
                 <input 
                   placeholder="担当できる課題番号（終了） *" 
                   type="text"
-                  value={formData.availableEndCode || ''} 
-                  onChange={(e) => handleInputChange("availableEndCode", e.target.value)} 
+                  value={mentorFormData.availableEndCode} 
+                  onChange={(e) => handleMentorInputChange("availableEndCode", e.target.value)} 
                   className="border p-2 rounded" 
                 />
               </>
@@ -352,17 +440,18 @@ export default function UserTable() {
         </div>
       )}
 
-      {roleFilter === 'mentor' && (
+      {roleFilter === 'mentor' &&(
         <div className="mb-4 space-x-2">
           <button 
             onClick={() => handleSort('experienceDays')}
-            className="px-4 py-2 bg-green-200 hover:bg-green-300 rounded"
+            className="px-4 py-2 bg-purple-200 hover:bg-purple-300 rounded"
           >
-            実務経験日数でソート {getSortButtonText('experienceDays')}
+            経験日数でソート {getSortButtonText('experienceDays')}
           </button>
         </div>
       )}
 
+      {/* テーブル */}
       <Table users={users} filteredAndSortedUsers={filteredAndSortedUsers} />
     </div>
   );

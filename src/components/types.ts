@@ -1,5 +1,3 @@
-
-
 export type Student = {
   id: number;
   name: string;
@@ -33,3 +31,27 @@ export type Mentor = {
 };
 
 export type User = Student | Mentor;
+
+export type BaseFormData = {
+  name: string;
+  email: string;
+  age: string;
+  postCode: string;
+  phone: string;
+  hobbies: string;
+  url: string;
+};
+
+export type StudentFormData = BaseFormData & {
+  studyMinutes: string;
+  taskCode: string;
+  studyLangs: string;
+  score: string;
+};
+
+export type MentorFormData = BaseFormData & {
+  experienceDays: string;
+  useLangs: string;
+  availableStartCode: string;
+  availableEndCode: string;
+};
