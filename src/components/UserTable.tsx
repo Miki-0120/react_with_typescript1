@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { User, Student, Mentor, StudentFormData, MentorFormData } from './types';
 import { Table } from './table';
+import { RegisterForm } from "./RegisterForm";
 
 const INITIAL_USER_LIST: User[] = [
   { id: 1, name: "鈴木太郎", role: "student", email: "test1@happiness.com", age: 26, postCode: "100-0003", phone: "0120000001", hobbies: ["旅行", "食べ歩き", "サーフィン"], url: "https://aaa.com", studyMinutes: 3000, taskCode: 101, studyLangs: ["Rails", "Javascript"], score: 68 },
@@ -139,7 +140,7 @@ export default function UserTable() {
       'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
       'studyMinutes', 'taskCode', 'studyLangs', 'score'
     ];
-    
+
     return requiredFields.every(field => data[field].trim() !== '');
   };
 
@@ -148,7 +149,7 @@ export default function UserTable() {
       'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
       'experienceDays', 'useLangs', 'availableStartCode', 'availableEndCode'
     ];
-    
+
     return requiredFields.every(field => data[field].trim() !== '');
   };
 
@@ -159,7 +160,7 @@ export default function UserTable() {
         return;
       }
 
-      const newStudent: Student = {
+       const newStudent: Student = {
         id: Math.max(...users.map(u => u.id)) + 1,
         name: studentFormData.name,
         role: 'student',
@@ -263,164 +264,17 @@ export default function UserTable() {
         </div>
       </div>
 
-      {/* 新規登録フォーム */}
-      {showRegistrationForm && selectedRole && (
-        <div className="mb-6 p-4 border border-gray-300 rounded bg-gray-50">
-          <h2 className="text-lg font-bold mb-4">
-            {selectedRole === "mentor" ? "メンター" : "生徒"}登録フォーム
-          </h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* 共通項目 */}
-            <input 
-              placeholder="名前 *" 
-              value={currentFormData.name} 
-              onChange={(e) => selectedRole === 'student' 
-                ? handleStudentInputChange("name", e.target.value)
-                : handleMentorInputChange("name", e.target.value)
-              } 
-              className="border p-2 rounded" 
-            />
-            <input 
-              placeholder="メールアドレス *" 
-              value={currentFormData.email} 
-              onChange={(e) => selectedRole === 'student' 
-                ? handleStudentInputChange("email", e.target.value)
-                : handleMentorInputChange("email", e.target.value)
-              } 
-              className="border p-2 rounded" 
-            />
-            <input 
-              placeholder="年齢 *" 
-              type="text"
-              value={currentFormData.age} 
-              onChange={(e) => selectedRole === 'student' 
-                ? handleStudentInputChange("age", e.target.value)
-                : handleMentorInputChange("age", e.target.value)
-              } 
-              className="border p-2 rounded" 
-            />
-            <input 
-              placeholder="郵便番号 *" 
-              value={currentFormData.postCode} 
-              onChange={(e) => selectedRole === 'student' 
-                ? handleStudentInputChange("postCode", e.target.value)
-                : handleMentorInputChange("postCode", e.target.value)
-              } 
-              className="border p-2 rounded" 
-            />
-            <input 
-              placeholder="電話番号 *" 
-              value={currentFormData.phone} 
-              onChange={(e) => selectedRole === 'student' 
-                ? handleStudentInputChange("phone", e.target.value)
-                : handleMentorInputChange("phone", e.target.value)
-              } 
-              className="border p-2 rounded" 
-            />
-            <input 
-              placeholder="趣味 (カンマ区切り) *" 
-              value={currentFormData.hobbies} 
-              onChange={(e) => selectedRole === 'student' 
-                ? handleStudentInputChange("hobbies", e.target.value)
-                : handleMentorInputChange("hobbies", e.target.value)
-              } 
-              className="border p-2 rounded" 
-            />
-            <input 
-              placeholder="URL *" 
-              value={currentFormData.url} 
-              onChange={(e) => selectedRole === 'student' 
-                ? handleStudentInputChange("url", e.target.value)
-                : handleMentorInputChange("url", e.target.value)
-              } 
-              className="border p-2 rounded col-span-full" 
-            />
-
-            {/* 生徒のみの項目 */}
-            {selectedRole === "student" && (
-              <>
-                <input 
-                  placeholder="勉強時間（分） *" 
-                  type="text"
-                  value={studentFormData.studyMinutes} 
-                  onChange={(e) => handleStudentInputChange("studyMinutes", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-                <input 
-                  placeholder="課題番号 *" 
-                  type="text"
-                  value={studentFormData.taskCode} 
-                  onChange={(e) => handleStudentInputChange("taskCode", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-                <input 
-                  placeholder="勉強中の言語 (カンマ区切り) *" 
-                  value={studentFormData.studyLangs} 
-                  onChange={(e) => handleStudentInputChange("studyLangs", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-                <input 
-                  placeholder="ハピネススコア *" 
-                  type="text"
-                  value={studentFormData.score} 
-                  onChange={(e) => handleStudentInputChange("score", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-              </>
-            )}
-
-            {/* メンターのみの項目 */}
-            {selectedRole === "mentor" && (
-              <>
-                <input 
-                  placeholder="実務経験日数 *" 
-                  type="text"
-                  value={mentorFormData.experienceDays} 
-                  onChange={(e) => handleMentorInputChange("experienceDays", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-                <input 
-                  placeholder="現場で使っている言語 (カンマ区切り) *" 
-                  value={mentorFormData.useLangs} 
-                  onChange={(e) => handleMentorInputChange("useLangs", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-                <input 
-                  placeholder="担当できる課題番号（開始） *" 
-                  type="text"
-                  value={mentorFormData.availableStartCode} 
-                  onChange={(e) => handleMentorInputChange("availableStartCode", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-                <input 
-                  placeholder="担当できる課題番号（終了） *" 
-                  type="text"
-                  value={mentorFormData.availableEndCode} 
-                  onChange={(e) => handleMentorInputChange("availableEndCode", e.target.value)} 
-                  className="border p-2 rounded" 
-                />
-              </>
-            )}
-          </div>
-
-          <div className="mt-4 space-x-2">
-            <button 
-              onClick={handleRegister} 
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              登録
-            </button>
-            <button 
-              onClick={resetForm} 
-              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-            >
-              キャンセル
-            </button>
-          </div>
-        </div>
-      )}
+      <RegisterForm
+  showRegistrationForm={showRegistrationForm}
+  selectedRole={selectedRole}
+  studentFormData={studentFormData}
+  mentorFormData={mentorFormData}
+  currentFormData={selectedRole === "student" ? studentFormData : mentorFormData}
+  handleStudentInputChange={handleStudentInputChange}
+  handleMentorInputChange={handleMentorInputChange}
+  handleRegister={handleRegister}
+  resetForm={resetForm}
+/>
 
       {/* ソートボタン */}
       {roleFilter === 'student' && (
