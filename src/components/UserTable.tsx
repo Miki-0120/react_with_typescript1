@@ -59,8 +59,11 @@ export default function UserTable() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"" | "student" | "mentor">("");
-  const [studentFormData, setStudentFormData] = useState<StudentFormData>(createEmptyStudentFormData());
-  const [mentorFormData, setMentorFormData] = useState<MentorFormData>(createEmptyMentorFormData());
+  // const [studentFormData, setStudentFormData] = useState<StudentFormData>(createEmptyStudentFormData());
+  // const [mentorFormData, setMentorFormData] = useState<MentorFormData>(createEmptyMentorFormData());
+   const [formData, setFormData] = useState<StudentFormData | MentorFormData>(
+    hasStudentProperties({ role: selectedRole } as User) ? createEmptyStudentFormData() : createEmptyMentorFormData()
+  );
 
   const handleSort = (key: SortableKey) => {
     if (sortKey === key) {
@@ -115,106 +118,163 @@ export default function UserTable() {
     setSelectedRole(role);
 
     if (role === 'student') {
-      setStudentFormData(createEmptyStudentFormData());
+      setFormData(createEmptyStudentFormData());
     } else {
-      setMentorFormData(createEmptyMentorFormData());
+      setFormData(createEmptyMentorFormData());
     }
   };
 
-  const handleStudentInputChange = (field: keyof StudentFormData, value: string) => {
-    setStudentFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleInputChange = (field: string, value: string) => {
+  setFormData(prev => ({
+    ...prev,
+    [field]: value
+  }));
+};
+  // const validateStudentForm = (data: StudentFormData): boolean => {
+  //   const requiredFields: (keyof StudentFormData)[] = [
+  //     'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
+  //     'studyMinutes', 'taskCode', 'studyLangs', 'score'
+  //   ];
+
+  //   return requiredFields.every(field => data[field].trim() !== '');
+  // };
+
+  // const validateMentorForm = (data: MentorFormData): boolean => {
+  //   const requiredFields: (keyof MentorFormData)[] = [
+  //     'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
+  //     'experienceDays', 'useLangs', 'availableStartCode', 'availableEndCode'
+  //   ];
+
+  //   return requiredFields.every(field => data[field].trim() !== '');
+  // };
+
+  const validateForm = (data: StudentFormData | MentorFormData) => {
+    const requiredFields = hasStudentProperties({ role: selectedRole } as User)
+      ? ['name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url', 'studyMinutes', 'taskCode', 'studyLangs', 'score']
+      : ['name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url', 'experienceDays', 'useLangs', 'availableStartCode', 'availableEndCode'];
+    
+    return requiredFields.every(field => data[field as keyof typeof data]?.toString().trim() !== '');
   };
 
-  const handleMentorInputChange = (field: keyof MentorFormData, value: string) => {
-    setMentorFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+  // const handleRegister = () => {
+  //    if (!validateForm(formData)) {
+  //   alert("全ての項目を入力してください。");
+  //   return;
+  // }
 
-  const validateStudentForm = (data: StudentFormData): boolean => {
-    const requiredFields: (keyof StudentFormData)[] = [
-      'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
-      'studyMinutes', 'taskCode', 'studyLangs', 'score'
-    ];
+  //      const newStudent: Student = {
+  //       id: Math.max(...users.map(u => u.id)) + 1,
+  //       name: formData.name,
+  //       role: 'student',
+  //       email: formData.email,
+  //       age: parseInt(studentFormData.age) || 0,
+  //       postCode: studentFormData.postCode,
+  //       phone: studentFormData.phone,
+  //       hobbies: studentFormData.hobbies.split(",").map(h => h.trim()).filter(Boolean),
+  //       url: studentFormData.url,
+  //       studyMinutes: parseInt(studentFormData.studyMinutes) || 0,
+  //       taskCode: parseInt(studentFormData.taskCode) || 0,
+  //       studyLangs: studentFormData.studyLangs.split(",").map(l => l.trim()).filter(Boolean),
+  //       score: parseInt(studentFormData.score) || 0
+  //     };
 
-    return requiredFields.every(field => data[field].trim() !== '');
-  };
+  //     setUsers(prev => [...prev, newStudent]);
+  //   } else if (selectedRole === 'mentor') {
+  //     if (!validateForm(mentorFormData)) {
+  //       alert("全ての項目を入力してください。");
+  //       return;
+  //     }
 
-  const validateMentorForm = (data: MentorFormData): boolean => {
-    const requiredFields: (keyof MentorFormData)[] = [
-      'name', 'email', 'age', 'postCode', 'phone', 'hobbies', 'url',
-      'experienceDays', 'useLangs', 'availableStartCode', 'availableEndCode'
-    ];
+  //     const newMentor: Mentor = {
+  //       id: Math.max(...users.map(u => u.id)) + 1,
+  //       name: mentorFormData.name,
+  //       role: 'mentor',
+  //       email: mentorFormData.email,
+  //       age: parseInt(mentorFormData.age) || 0,
+  //       postCode: mentorFormData.postCode,
+  //       phone: mentorFormData.phone,
+  //       hobbies: mentorFormData.hobbies.split(",").map(h => h.trim()).filter(Boolean),
+  //       url: mentorFormData.url,
+  //       experienceDays: parseInt(mentorFormData.experienceDays) || 0,
+  //       useLangs: mentorFormData.useLangs.split(",").map(l => l.trim()).filter(Boolean),
+  //       availableStartCode: parseInt(mentorFormData.availableStartCode) || 0,
+  //       availableEndCode: parseInt(mentorFormData.availableEndCode) || 0
+  //     };
 
-    return requiredFields.every(field => data[field].trim() !== '');
-  };
+    //   setUsers(prev => [...prev, newMentor]);
+    // }
+
+  //   setSelectedRole("");
+  //   setShowRegistrationForm(false);
+  //   alert("登録に成功しました");
+  // };
+
+  //       url: formData.url,
+  //     (hasStudentProperties({ role: selectedRole } as User) ? {
+  //       studyMinutes: parseInt((formData as StudentFormData).studyMinutes) || 0,
+  //       taskCode: parseInt((formData as StudentFormData).taskCode) || 0,
+  //       studyLangs: (formData as StudentFormData).studyLangs.split(",").map(l => l.trim()).filter(Boolean),
+  //       score: parseInt((formData as StudentFormData).score) || 0
+  //     } : {
+  //       experienceDays: parseInt((formData as MentorFormData).experienceDays) || 0,
+  //       useLangs: (formData as MentorFormData).useLangs.split(",").map(l => l.trim()).filter(Boolean),
+  //       availableStartCode: parseInt((formData as MentorFormData).availableStartCode) || 0,
+  //       availableEndCode: parseInt((formData as MentorFormData).availableEndCode) || 0
+  //     })}
+
+      
+
+  // const resetForm = () => {
+  //   setSelectedRole("");
+  //   setFormData(createEmptyStudentFormData());
+  //   setShowRegistrationForm(false);
+  //   alert("登録に成功しました");
+  // };
 
   const handleRegister = () => {
-    if (selectedRole === 'student') {
-      if (!validateStudentForm(studentFormData)) {
-        alert("全ての項目を入力してください。");
-        return;
-      }
+  if (!validateForm(formData)) {
+    alert("全ての項目を入力してください。");
+    return;
+  }
 
-       const newStudent: Student = {
-        id: Math.max(...users.map(u => u.id)) + 1,
-        name: studentFormData.name,
-        role: 'student',
-        email: studentFormData.email,
-        age: parseInt(studentFormData.age) || 0,
-        postCode: studentFormData.postCode,
-        phone: studentFormData.phone,
-        hobbies: studentFormData.hobbies.split(",").map(h => h.trim()).filter(Boolean),
-        url: studentFormData.url,
-        studyMinutes: parseInt(studentFormData.studyMinutes) || 0,
-        taskCode: parseInt(studentFormData.taskCode) || 0,
-        studyLangs: studentFormData.studyLangs.split(",").map(l => l.trim()).filter(Boolean),
-        score: parseInt(studentFormData.score) || 0
-      };
+  const newId = Math.max(...users.map(u => u.id)) + 1;
+  const isStudent = selectedRole === 'student';
 
-      setUsers(prev => [...prev, newStudent]);
-    } else if (selectedRole === 'mentor') {
-      if (!validateMentorForm(mentorFormData)) {
-        alert("全ての項目を入力してください。");
-        return;
-      }
+  const newUser: User = {
+    id: newId,
+    name: formData.name,
+    role: selectedRole,
+    email: formData.email,
+    age: parseInt(formData.age) || 0,
+    postCode: formData.postCode,
+    phone: formData.phone,
+    hobbies: formData.hobbies.split(",").map(h => h.trim()).filter(Boolean),
+    url: formData.url,
+    ...(isStudent ? {
+      studyMinutes: parseInt((formData as StudentFormData).studyMinutes) || 0,
+      taskCode: parseInt((formData as StudentFormData).taskCode) || 0,
+      studyLangs: (formData as StudentFormData).studyLangs.split(",").map(l => l.trim()).filter(Boolean),
+      score: parseInt((formData as StudentFormData).score) || 0
+    } : {
+      experienceDays: parseInt((formData as MentorFormData).experienceDays) || 0,
+      useLangs: (formData as MentorFormData).useLangs.split(",").map(l => l.trim()).filter(Boolean),
+      availableStartCode: parseInt((formData as MentorFormData).availableStartCode) || 0,
+      availableEndCode: parseInt((formData as MentorFormData).availableEndCode) || 0
+    })
+  } as User;
 
-      const newMentor: Mentor = {
-        id: Math.max(...users.map(u => u.id)) + 1,
-        name: mentorFormData.name,
-        role: 'mentor',
-        email: mentorFormData.email,
-        age: parseInt(mentorFormData.age) || 0,
-        postCode: mentorFormData.postCode,
-        phone: mentorFormData.phone,
-        hobbies: mentorFormData.hobbies.split(",").map(h => h.trim()).filter(Boolean),
-        url: mentorFormData.url,
-        experienceDays: parseInt(mentorFormData.experienceDays) || 0,
-        useLangs: mentorFormData.useLangs.split(",").map(l => l.trim()).filter(Boolean),
-        availableStartCode: parseInt(mentorFormData.availableStartCode) || 0,
-        availableEndCode: parseInt(mentorFormData.availableEndCode) || 0
-      };
+  setUsers(prev => [...prev, newUser]);
 
-      setUsers(prev => [...prev, newMentor]);
-    }
-
+  const resetForm = () => {
     setSelectedRole("");
+    setFormData(createEmptyStudentFormData());
     setShowRegistrationForm(false);
     alert("登録に成功しました");
   };
 
-  const resetForm = () => {
-    setSelectedRole("");
-    setStudentFormData(createEmptyStudentFormData());
-    setMentorFormData(createEmptyMentorFormData());
-    setShowRegistrationForm(false);
-  };
 
-  const currentFormData = selectedRole === 'student' ? studentFormData : mentorFormData;
+
+  const currentFormData = selectedRole === 'student' ? formData : formData;
 
   return (
     <div className="p-4">
@@ -264,14 +324,14 @@ export default function UserTable() {
         </div>
       </div>
 
-      <RegisterForm
+     <RegisterForm
   showRegistrationForm={showRegistrationForm}
   selectedRole={selectedRole}
-  studentFormData={studentFormData}
-  mentorFormData={mentorFormData}
-  currentFormData={selectedRole === "student" ? studentFormData : mentorFormData}
-  handleStudentInputChange={handleStudentInputChange}
-  handleMentorInputChange={handleMentorInputChange}
+  studentFormData={selectedRole === "student" ? formData as StudentFormData : createEmptyStudentFormData()}
+  mentorFormData={selectedRole === "mentor" ? formData as MentorFormData : createEmptyMentorFormData()}
+  currentFormData={formData}
+  handleStudentInputChange={(field, value) => handleInputChange(field, value)}
+  handleMentorInputChange={(field, value) => handleInputChange(field, value)}
   handleRegister={handleRegister}
   resetForm={resetForm}
 />
@@ -309,4 +369,4 @@ export default function UserTable() {
       <Table users={users} filteredAndSortedUsers={filteredAndSortedUsers} />
     </div>
   );
-}
+};

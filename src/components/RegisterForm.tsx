@@ -6,7 +6,7 @@ type RegisterFormProps = {
   selectedRole: "" | "student" | "mentor";
   studentFormData: StudentFormData;
   mentorFormData: MentorFormData;
-  currentFormData: any;
+  currentFormData: StudentFormData | MentorFormData;
   handleStudentInputChange: (field: keyof StudentFormData, value: string) => void;
   handleMentorInputChange: (field: keyof MentorFormData, value: string) => void;
   handleRegister: () => void;
